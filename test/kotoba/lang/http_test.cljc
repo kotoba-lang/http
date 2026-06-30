@@ -1,0 +1,38 @@
+(ns kotoba.lang.http-test
+  (:require [clojure.test :refer [deftest is testing]]
+            [kotoba.lang.http :as http]))
+
+(deftest request-and-response-shape
+  (is (= :get (:http/method (http/request :get "https://x"))))
+  (is (= :get (:http/method (http/request "GET" "https://x"))))   ; string normalized
+  (is (= {"X-A" "1"} (:http/headers (http/request :get "u" {:headers {"X-A" "1"}}))))
+  (is (= 200 (:http/status (http/response 200))))
+  (is (= {:http/status 201 :http/headers {} :http/body "x"} (http/response 201 {} "x"))))
+
+(deftest header-case-insensitive
+  (let [h {"Content-Type" "json" "X-Foo" "1"}]
+    (is (= "json" (http/header h "content-type")))
+    (is (= "json" (http/header h "CONTENT-TYPE")))
+    (is (= "1" (http/header h "x-foo")))
+    (is (nil? (http/header h "missing")))
+    (is (= "d" (http/header h "missing" "d")))))
+
+(deftest set-header-replaces-case-variant
+  (let [h (http/set-header {"X-Foo" "1" "x-bar" "2"} "x-foo" "9")]
+    (is (= {"x-bar" "2" "x-foo" "9"} h))
+    (is (= 2 (count h)))))
+
+(deftest parse-url
+  (is (= {:scheme "https" :host "a.b" :port 8443 :path "/x" :query "y=1"}
+         (http/parse-url "https://a.b:8443/x?y=1")))
+  (is (= {:scheme "http" :host "a.b" :path "/"}
+         (http/parse-url "http://a.b/")))
+  (is (= {:scheme "http" :host "a.b"}
+         (http/parse-url "http://a.b")))
+  (is (thrown? clojure.lang.ExceptionInfo (http/parse-url "not a url"))))
+
+(deftest mock-http-send
+  (let [c (http/mock-http (fn [req] (http/response 200 {"ct" "json"} (:http/url req))))]
+    (let [r (http/send c (http/request :get "https://x"))]
+      (is (= 200 (:http/status r)))
+      (is (= "https://x" (:http/body r))))))
