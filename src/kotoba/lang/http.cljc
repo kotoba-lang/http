@@ -8,7 +8,8 @@
   pure and portable.
 
   Zero third-party runtime deps; .cljc (JVM / SCI / CLJS / GraalVM / kotoba-WASM)."
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [kotoba.lang.json :as json]))
 
 ;; ---------- request / response data ----------
 
@@ -78,3 +79,21 @@
   [handler]
   (reify IHttp
     (send [_ req] (handler req))))
+
+;; ---------- JSON body helpers (consume kotoba-lang/json) ----------
+
+(defn request-json
+  "Build a request with `data` serialized as a JSON body and a
+  `Content-Type: application/json` header. The JSON encoding comes from the
+  sibling `kotoba-lang/json` lib — http is a consumer of it."
+  ([method url data] (request-json method url data nil))
+  ([method url data opts]
+   (let [base-headers (or (:headers opts) {})
+         headers (assoc base-headers "Content-Type" "application/json")]
+     (request method url (assoc opts :headers headers :body (json/encode data))))))
+
+(defn decode-json-body
+  "Decode a response's `:http/body` (a JSON string) into Clojure data via
+  `kotoba-lang/json`."
+  [resp]
+  (json/decode (:http/body resp)))

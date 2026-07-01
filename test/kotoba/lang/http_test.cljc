@@ -4,7 +4,7 @@
 
 (deftest request-and-response-shape
   (is (= :get (:http/method (http/request :get "https://x"))))
-  (is (= :get (:http/method (http/request "GET" "https://x"))))   ; string normalized
+  (is (= :get (:http/method (http/request "GET" "https://x"))))
   (is (= {"X-A" "1"} (:http/headers (http/request :get "u" {:headers {"X-A" "1"}}))))
   (is (= 200 (:http/status (http/response 200))))
   (is (= {:http/status 201 :http/headers {} :http/body "x"} (http/response 201 {} "x"))))
@@ -36,3 +36,14 @@
     (let [r (http/send c (http/request :get "https://x"))]
       (is (= 200 (:http/status r)))
       (is (= "https://x" (:http/body r))))))
+
+(deftest request-json-encodes-body-and-content-type
+  (let [req (http/request-json :post "https://x/api" {:name "ada" :age 36})
+        ct  (http/header (:http/headers req) "content-type")]
+    (is (= "application/json" ct))
+    (is (= {"name" "ada" "age" 36} (http/decode-json-body req)))))
+
+(deftest decode-json-body-parses-response
+  (let [c (http/mock-http (fn [_] (http/response 200 {} "{\"ok\":true}")))
+        r  (http/send c (http/request-json :post "https://x" {:x 1}))]
+    (is (= {"ok" true} (http/decode-json-body r)))))

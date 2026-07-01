@@ -1,9 +1,11 @@
 {:paths ["src"]
  ;; kotoba-lang/http — Layer 3 (I/O) of the kotoba foundational stdlib.
  ;; Request/response data model + pure parse-url + an IHttp protocol the HOST
- ;; injects (no baked-in HTTP client) so it runs on kotoba-WASM. Zero
- ;; third-party runtime deps; .cljc. See ADR-kotoba-lang-foundational-stdlib.md.
- :deps {}
+ ;; injects (no baked-in HTTP client) so it runs on kotoba-WASM. No third-party
+ ;; deps; the only dep is the sibling kotoba-lang/json (first-party, zero-dep)
+ ;; for JSON request/response body helpers. .cljc.
+ ;; See ADR-kotoba-lang-foundational-stdlib.md.
+ :deps {io.github.kotoba-lang/json {:git/sha "ae1f323a424119a04078e3a3bcbebdc5b4d321c7"}}
  :aliases
  {:test {:extra-paths ["test"]
          :extra-deps {io.github.cognitect-labs/test-runner
