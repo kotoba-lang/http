@@ -1,4 +1,5 @@
 {:paths ["src"]
+ :version "0.1.0"
  ;; kotoba-lang/http — Layer 3 (I/O) of the kotoba foundational stdlib.
  ;; Request/response data model + pure parse-url + an IHttp protocol the HOST
  ;; injects (no baked-in HTTP client) so it runs on kotoba-WASM. No third-party
