@@ -29,7 +29,7 @@
          (http/parse-url "http://a.b/")))
   (is (= {:scheme "http" :host "a.b"}
          (http/parse-url "http://a.b")))
-  (is (thrown? clojure.lang.ExceptionInfo (http/parse-url "not a url"))))
+  (is (thrown? #?(:clj clojure.lang.ExceptionInfo :cljs js/Error) (http/parse-url "not a url"))))
 
 (deftest mock-http-send
   (let [c (http/mock-http (fn [req] (http/response 200 {"ct" "json"} (:http/url req))))]
