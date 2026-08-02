@@ -28,6 +28,15 @@ for tests.
 - `IHttp` protocol: `send` (host-injected transport)
 - `mock-http` — routing fn → response, for tests
 
+## Kotoba source authority
+
+`src/kotoba/lang/exact_router.kotoba` owns a zero-capability exact-route table:
+case-normalized method plus literal path maps to a handler keyword. It compiles
+to restricted browser JS and typed browser Wasm, and is bounded to 31 routes.
+Transport remains host-provided; dynamic paths and middleware will use a later
+bounded route-plan ABI. The measured boundary is recorded in
+`migration/exact-router-v1.edn`.
+
 ## Install
 
 ```clojure
