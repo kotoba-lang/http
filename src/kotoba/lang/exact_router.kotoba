@@ -46,7 +46,7 @@
         health (resolve-route r3 "get" "/health")]
     (if (= (route-count r3) 1)
       (if (route-exists? r3 "GET" "/health")
-        (if (= (option-value-of [:option :keyword] health :missing) :health)
+        (if (= (option-or health :missing) :health)
           (if (route-exists? r3 "GET" "/missing") 4 42)
           3)
         2)
