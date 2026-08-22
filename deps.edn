@@ -24,7 +24,7 @@
   ;; instance of it so the composition can be run against the public internet.
   :live {:extra-deps {io.github.kotoba-lang/org-ietf-tls
                       {:git/url "https://github.com/kotoba-lang/org-ietf-tls.git"
-                       :git/sha "b37f9122aa659007240b6185f2442584d1e33da9"}}}
+                       :git/sha "b91d4a144e7ce89380643e440f7eac48d91e45a4"}}}
 
   ;; clj-kondo as a Clojars lib (no Homebrew/system install needed).
   :lint {:replace-deps {clj-kondo/clj-kondo {:mvn/version "2024.11.14"}}

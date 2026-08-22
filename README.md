@@ -135,7 +135,22 @@ clojure -M:live scripts/live_fetch.clj
 
 org-ietf-tls is a **script-scope** dependency (the `:live` alias) and appears
 nowhere in `:deps`. The entire coupling is `tls-transport`, twenty lines that
-turn `tls.client/write!` and `read!` into a `{:write :read}` pair.
+turn `tls.client/write!` and `read!` into a `{:write :read}` pair. It uses
+org-ietf-tls's shipped `tls.provider.jvm` directly, with no adaptation
+(measured at org-ietf-tls `b91d4a1`).
+
+The script ends with a **negative control**: the same fetch under a deliberately
+wrong SPKI pin, which must be refused. Two lessons are baked into it, both
+learned the hard way here and both worth carrying to other suites:
+
+- **Assert the reason, not the outcome.** The first version of that control
+  passed while the handshake was dying at ServerHello for an entirely unrelated
+  reason. "It was refused" was true, and meaningless, because the pin was never
+  reached. A check that has never refused *for the reason it claims to test* has
+  not discriminated, and a green run of it means nothing.
+- **Pin the literal reason.** It was `:spki-pin-mismatch` at org-ietf-tls
+  `b37f912` and is `:peer-not-pinned` at `b91d4a1`. Asserting the literal is
+  what made that upstream rename visible instead of silent.
 
 ## Kotoba source authority
 
@@ -175,3 +190,9 @@ The suite prints `EXECUTED <n> FLOOR <n>` and fails below the floor; the live
 script prints `LIVE-CHECKS <n>` and exits 2 rather than reporting a pass when
 nothing ran. A suite that measured nothing must not look like one that measured
 and found no problem.
+
+**Run both runtimes.** The nbb entry is not a formality. It caught a defect the
+JVM suite structurally could not see: `(int \!)` is `0` in ClojureScript, so a
+token character set built with `(map int "!#$%&'*+-.^_`|~")` was `#{0}` there —
+every valid header name was invalid on that runtime, and the JVM run was green
+throughout.
