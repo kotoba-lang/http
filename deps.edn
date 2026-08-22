@@ -17,6 +17,15 @@
          :main-opts ["-m" "cognitect.test-runner"]
          :exec-fn cognitect.test-runner.api/test}
 
+  ;; Live composition proof (scripts/live_fetch.clj). org-ietf-tls is a
+  ;; SCRIPT-SCOPE dependency and appears nowhere in :deps -- `http` is Layer 3
+  ;; of the foundational stdlib and must not depend on TLS. The wire client
+  ;; takes an injected byte transport; this alias only supplies one real
+  ;; instance of it so the composition can be run against the public internet.
+  :live {:extra-deps {io.github.kotoba-lang/org-ietf-tls
+                      {:git/url "https://github.com/kotoba-lang/org-ietf-tls.git"
+                       :git/sha "b37f9122aa659007240b6185f2442584d1e33da9"}}}
+
   ;; clj-kondo as a Clojars lib (no Homebrew/system install needed).
   :lint {:replace-deps {clj-kondo/clj-kondo {:mvn/version "2024.11.14"}}
          :main-opts ["-m" "clj-kondo.main" "--lint" "src" "test"
