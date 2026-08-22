@@ -28,6 +28,115 @@ for tests.
 - `IHttp` protocol: `send` (host-injected transport)
 - `mock-http` — routing fn → response, for tests
 
+`kotoba.lang.http.wire` (see [The wire layer](#the-wire-layer)):
+
+- `serialize-request` / `parse-response` — RFC 9112 §3 and §4–§6
+- `recv-init` / `recv-feed` / `recv-eof` — a resumable parser that does not
+  care where the read boundaries fell
+- `exchange` — one request/response over an injected byte transport
+- `transport-http` — an `IHttp` over that transport
+
+## The wire layer
+
+`kotoba.lang.http.wire` is an HTTP/1.1 client (RFC 9112) over an **injected
+byte transport**. It knows nothing about TLS, sockets or DNS: it is handed two
+functions and speaks HTTP through them, so the same code runs on a plaintext
+socket, on a TLS 1.3 record layer, or on a kotoba-WASM host capability, and
+`http` acquires a dependency on none of them.
+
+```clojure
+(require '[kotoba.lang.http :as http]
+         '[kotoba.lang.http.wire :as w])
+
+;; a transport is two functions
+{:write (fn [octets] [:ok (count octets)])          ; | [:error reason detail]
+ :read  (fn []       [:ok octets])}                 ; | [:eof] | [:error reason detail]
+
+(w/exchange transport (http/request :get "https://a.b/x"))
+;=> [:ok {:http/status 200 :http/headers {...} :http/body [...]}]
+;=> [:error :conflicting-content-length {:values ["5" "6"]}]
+
+;; or as the IHttp the rest of this library already speaks
+(http/send (w/transport-http transport) (http/request :get "https://a.b/x"))
+```
+
+Bytes are a vector of ints in `0..255` ("octets"), so nothing depends on a host
+byte-array type; `->octets`, `utf8-encode` / `utf8-decode`, `latin1-encode` /
+`latin1-decode` and `octets->hex` convert.
+
+### Errors are values
+
+Every fallible entry point returns `[:ok value]` or `[:error reason detail]`,
+where `reason` is a keyword naming exactly one refusal and `detail` is a map.
+Nothing here throws. `.kotoba` has no `try`/`catch`, so a thrown parse error
+could never become a decision core; a returned one can. `IHttp/send` must
+return a response map, so on failure it returns one with `:http/status 0` and
+`:http/error` — never an exception.
+
+### It refuses rather than normalises
+
+An ambiguous frame is a request-smuggling primitive, not a formatting quirk.
+Each refusal has its own reason, because a parser that refuses everything with
+`:bad-response` tells a caller nothing:
+
+| reason | what it refuses |
+|---|---|
+| `:content-length-with-transfer-encoding` | both framings in one message (RFC 9112 §6.1) |
+| `:conflicting-content-length` | two `Content-Length` values that disagree |
+| `:malformed-content-length` | a length that is not digits |
+| `:invalid-chunk-size` | a chunk size that is not hex, or is padded with space |
+| `:chunk-size-too-large` / `:too-many-chunks` | chunk framing over the ceiling |
+| `:truncated-chunk-data` | a chunk that ran past what arrived |
+| `:missing-last-chunk` | no final `0\r\n\r\n` |
+| `:missing-chunk-crlf` | a chunk not followed by CRLF |
+| `:header-missing-colon` | a field line with no colon |
+| `:whitespace-before-colon` | space before the colon (RFC 9112 §5.1) |
+| `:bare-lf-line-terminator` | a bare LF used as a line terminator |
+| `:obs-fold` | an obsolete line fold |
+| `:body-too-large` / `:line-too-long` / `:too-many-headers` | over a caller-supplied ceiling |
+| `:unsupported-http-version` | anything that is not HTTP/1.0 or HTTP/1.1 |
+| `:header-name-contains-control` / `:header-value-contains-control` | CR, LF or NUL in a request header — refused at construction, so it never reaches the wire |
+| `:truncated-response-head` / `:truncated-body` / `:empty-response` | the peer closed mid-message |
+
+Identical duplicate `Content-Length` values are **accepted** and collapse to one
+(RFC 9112 §6.3 permits it, and refusing a server that merely repeats itself
+would break real traffic). Only disagreement is a desync.
+
+Every ceiling is caller-supplied via `:limits` — the caller decides how much
+memory a stranger may spend. `w/default-limits` is a starting point, not a
+policy.
+
+### What a caller must not assume
+
+- **No HTTP/2, no HTTP/3.** `HTTP/2` in a status line is refused, not
+  downgraded. There is no ALPN here — that belongs to the transport.
+- **No redirect following.** A 302 is returned as a 302.
+- **No connection management**: no pooling, no keep-alive reuse, no pipelining.
+  `exchange` is one request over one transport.
+- **No cookies, no auth, no proxies, no `CONNECT`**, no `Expect: 100-continue`
+  (interim responses are discarded, not answered).
+- **No content decoding.** `Content-Encoding: gzip` is handed back as bytes;
+  `Transfer-Encoding: gzip` is refused outright.
+- **No timeouts and no retries.** Both belong to the transport, which is the
+  only thing that can block.
+- **The body is octets, not a string.** Decode it yourself — `latin1-decode` is
+  lossless, `utf8-decode` is strict and returns a result.
+- **Field values are decoded latin-1**, one octet per code unit, so nothing the
+  sender sent is lost.
+
+### Live proof
+
+`scripts/live_fetch.clj` composes `kotoba-lang/org-ietf-tls` as the transport
+with this client and fetches from `kotobase.net:443` under an SPKI pin:
+
+```sh
+clojure -M:live scripts/live_fetch.clj
+```
+
+org-ietf-tls is a **script-scope** dependency (the `:live` alias) and appears
+nowhere in `:deps`. The entire coupling is `tls-transport`, twenty lines that
+turn `tls.client/write!` and `read!` into a `{:write :read}` pair.
+
 ## Kotoba source authority
 
 `src/kotoba/lang/exact_router.kotoba` owns a zero-capability exact-route table:
@@ -56,5 +165,13 @@ io.github.kotoba-lang/http {:git/sha "<sha>"}
 ## Verify
 
 ```sh
-clojure -M:test
+clojure -M:test                                      # JVM
+nbb --classpath src:test run-tests.cljs              # the same .cljc suite, second runtime
+clojure -M:lint
+clojure -M:live scripts/live_fetch.clj               # live, over TLS 1.3
 ```
+
+The suite prints `EXECUTED <n> FLOOR <n>` and fails below the floor; the live
+script prints `LIVE-CHECKS <n>` and exits 2 rather than reporting a pass when
+nothing ran. A suite that measured nothing must not look like one that measured
+and found no problem.
