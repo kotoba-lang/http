@@ -22,13 +22,26 @@ kotoba-lang stdlib compatibility policy (kotoba-lang/kotoba-lang/docs/lang/stdli
   terminator, whitespace before a colon, obs-fold, and every caller-supplied
   ceiling.
 - `scripts/live_fetch.clj` + the `:live` alias: a live composition with
-  `kotoba-lang/org-ietf-tls` (script-scope only) against `kotobase.net:443`.
+  `kotoba-lang/org-ietf-tls` (script-scope only) against `kotobase.net:443`,
+  using its shipped `tls.provider.jvm` directly with no adaptation (measured at
+  org-ietf-tls `b91d4a1`), plus a wrong-pin negative control.
 
 ### Fixed
 - The suite now runs on nbb as well as the JVM, which caught a real
   ClojureScript defect before it shipped: `(int \!)` is 0 there, so a token
   character set built with `(map int "...")` would have been `#{0}` and every
-  valid header name invalid on that runtime.
+  valid header name invalid on that runtime. The JVM suite was green
+  throughout and structurally could not have shown this — run both runtimes.
+
+### Notes
+- The live negative control asserts the *reason* a wrong SPKI pin is refused,
+  not merely that something was refused. Its first version passed spuriously
+  while the handshake was dying earlier for an unrelated cause: "it was
+  refused" was true and meaningless because the pin was never reached. A check
+  that has never refused for the reason it claims to test has not
+  discriminated. It also pins the literal reason, which is how the upstream
+  rename `:spki-pin-mismatch` (org-ietf-tls `b37f912`) →
+  `:peer-not-pinned` (`b91d4a1`) surfaced instead of passing silently.
 
 ## [0.1.0] - 2026-07-01
 

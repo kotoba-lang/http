@@ -11,6 +11,14 @@
 ;; asks for. Anything else that can move bytes both ways would do as well,
 ;; which is the point.
 ;;
+;; The provider is org-ietf-tls's SHIPPED `tls.provider.jvm`, passed straight
+;; to `client/handshake` with no adaptation. Measured at org-ietf-tls b91d4a1:
+;; `handshake` runs `tls.provider.vectors/adapt` on the raw provider itself, so
+;; the byte-array/byte-vector conversion happens once at the seam rather than at
+;; each call site. An earlier revision of this script carried a shim for that;
+;; it is deleted, because a documented workaround that is no longer needed reads
+;; as a live constraint to the next person.
+;;
 ;; Exit 0 only if every check passed AND at least `check-floor` checks ran:
 ;; a run that measured nothing must not report success (root ADR-2608136000).
 
@@ -18,7 +26,6 @@
          '[tls.provider.jvm :as provider]
          '[tls.transport.jvm :as tp]
          '[tls.result :as r]
-         '[clojure.string :as str]
          '[kotoba.lang.http :as http]
          '[kotoba.lang.http.wire :as w])
 
@@ -27,7 +34,7 @@
 (def host "kotobase.net")
 (def port 443)
 (def pin "50602ad366823fcf5274a7c917baa4fd24b9de4fd15635ff501177c83d05473e")
-(def check-floor 10)
+(def check-floor 11)
 
 (def checks (atom {:ran 0 :failed 0}))
 
@@ -44,76 +51,6 @@
   (let [md (MessageDigest/getInstance "SHA-256")
         ba (byte-array (map #(unchecked-byte %) octets))]
     (apply str (map #(format "%02x" (bit-and % 0xff)) (.digest md ba)))))
-
-(defn- unsign
-  "Every Java byte-array in `x` becomes a vector of unsigned octets, which is
-  the representation the rest of org-ietf-tls uses."
-  [x]
-  (cond
-    (bytes? x) (mapv #(bit-and % 0xff) x)
-    (map? x) (into {} (map (fn [[k v]] [k (unsign v)])) x)
-    (vector? x) (mapv unsign x)
-    :else x))
-
-(defn- ->ba
-  "A sequential collection of ints becomes a Java byte-array; anything else
-  (a keyword, a length) is passed through untouched."
-  [x]
-  (if (and (sequential? x) (every? integer? x))
-    (byte-array (map #(unchecked-byte %) x))
-    x))
-
-(defn- adapt
-  "Byte-arrays in, unsigned octets out -- the representation contract the rest
-  of org-ietf-tls actually uses."
-  [f]
-  (fn [& args] (unsign (apply f (map ->ba args)))))
-
-(defn- wrap-leaves [m]
-  (into {} (map (fn [[k v]] [k (cond (fn? v) (adapt v) (map? v) (wrap-leaves v) :else v)])) m))
-
-(defn tls-provider
-  "org-ietf-tls's shipped JVM provider, with every byte-array output normalised
-  to unsigned octets.
-
-  MEASURED 2026-08-22 against org-ietf-tls b37f912. `tls.provider.jvm` returns
-  raw Java byte-arrays (signed, -128..127); the rest of the library represents
-  bytes as vectors of unsigned ints, and its test-scope `tls.jdk-provider`
-  masks with 0xff on every path (`->vec`). The public provider does not, so a
-  consumer gets:
-
-    :random -> returns signed bytes, so the handshake dies at ServerHello with
-               #:tls{:alert :illegal_parameter :reason :session-id-echo-mismatch}
-               -- legacy_session_id_echo is parsed unsigned and compared against
-               what was sent signed.
-    :sig    -> its scheme table is keyed with hyphens, the protocol with
-               underscores, so CertificateVerify is [:error
-               :signature/unknown-scheme] for every scheme that exists.
-    :hmac   -> REFUSES a vector of unsigned ints with [:error :hmac/bad-input],
-               which is what the key schedule hands it. That error value then
-               flows into the derived write IV as data, and tls.record/nonce
-               throws IllegalArgumentException \"bit operation not supported
-               for: class clojure.lang.Keyword\" while XORing it.
-
-  So the adaptation has to run in both directions: byte-arrays in, unsigned
-  octets out.
-
-  org-ietf-tls's own live script works because it runs on the test provider.
-  This is a defect in org-ietf-tls, not in the wire layer, and this shim exists
-  to be deleted once the provider masks its own output. It is a workaround, not
-  a contract."
-  []
-  (-> (wrap-leaves (provider/provider))
-      (update-in [:signature :verify]
-                 (fn [f]
-                   ;; Third mismatch: its scheme table is keyed
-                   ;; :ecdsa-secp256r1-sha256 while the protocol -- and its own
-                   ;; tls.extension number table, tls.client default list and
-                   ;; test provider -- say :ecdsa_secp256r1_sha256. Every real
-                   ;; CertificateVerify therefore comes back
-                   ;; [:error :signature/unknown-scheme].
-                   (fn [scheme & args]
-                     (apply f (keyword (str/replace (name scheme) "_" "-")) args))))))
 
 (defn tls-transport
   "Adapt a live TLS 1.3 connection to the wire layer's transport seam.
@@ -143,7 +80,7 @@
   [path & [{:keys [spki-pin]}]]
   (let [t (tp/socket-transport host port {:timeout-ms 15000})]
     (try
-      (let [hs (tls/handshake (tls-provider) t
+      (let [hs (tls/handshake (provider/provider) t
                               {:server-name host
                                :pin-spki-sha256 (or spki-pin pin)})]
         (if (r/error? hs)
@@ -217,7 +154,17 @@
   (check! "wrong pin refused" true (some? handshake-error))
   (when handshake-error
     (println "  refusal      " (pr-str handshake-error))
-    (check! "refusal reason" :spki-pin-mismatch (:tls/reason handshake-error))))
+    ;; Assert the ALERT and the REASON, not just that something failed. The
+    ;; first version of this control passed while the handshake was dying at
+    ;; ServerHello for an unrelated reason -- "it was refused" was true, and
+    ;; meaningless, because the pin was never reached. Checking the reason is
+    ;; what caught that.
+    ;;
+    ;; The literal reason is deliberate. It was :spki-pin-mismatch at
+    ;; org-ietf-tls b37f912 and is :peer-not-pinned at b91d4a1; this check is
+    ;; where that rename became visible instead of passing silently.
+    (check! "refusal alert" :bad_certificate (:tls/alert handshake-error))
+    (check! "refusal reason" :peer-not-pinned (:tls/reason handshake-error))))
 
 (println)
 (let [{:keys [ran failed]} @checks]
