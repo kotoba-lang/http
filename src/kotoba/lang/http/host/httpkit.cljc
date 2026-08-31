@@ -8,6 +8,7 @@
 #?(:clj (def run-server impl/run-server))
 #?(:clj (def send! impl/send!))
 #?(:clj (def close impl/close))
+#?(:clj (def as-channel impl/as-channel))
 #?(:clj (def on-receive impl/on-receive))
 #?(:clj (def Channel impl/Channel))
 
