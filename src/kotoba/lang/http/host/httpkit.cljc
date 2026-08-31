@@ -8,7 +8,6 @@
 #?(:clj (def run-server impl/run-server))
 #?(:clj (def send! impl/send!))
 #?(:clj (def close impl/close))
-#?(:clj (def ring-async-response impl/ring-async-response))
 #?(:clj (def on-receive impl/on-receive))
 #?(:clj (def Channel impl/Channel))
 
@@ -17,3 +16,21 @@
      "Ring async / SSE / WebSocket channel binding. Delegates to http-kit."
      [req channel & body]
      `(impl/with-channel ~req ~channel ~@body)))
+
+#?(:clj
+   (defn ring-async-response
+     "Ring async handler response channel. `org.httpkit.server` never shipped a
+     `ring-async-response` var (measured 2026-08-31 against 2.8.0, 2.8.1 and
+     2.9.0-beta4 — none of `ns-publics` carries it, and neither does Babashka's
+     bundled copy), so the original `(def ring-async-response
+     impl/ring-async-response)` could not LOAD: the namespace itself threw
+     `No such var: impl/ring-async-response` on every consumer that merely
+     required it, taking murakumo's main CI down for ~36h. The shape an async
+     Ring handler must return is a plain channel — `as-channel` is what
+     creates one, and `send!` puts the response on it. Keep the name alive as
+     a function so existing callers keep working, but build it from vars
+     http-kit actually exports."
+     ([channel] channel)
+     ([channel response]
+      (impl/send! channel response)
+      channel)))
