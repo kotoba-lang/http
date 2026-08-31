@@ -9,7 +9,12 @@
 #?(:clj (def send! impl/send!))
 #?(:clj (def close impl/close))
 #?(:clj (def on-receive impl/on-receive))
+#?(:clj (def on-close impl/on-close))
+#?(:clj (def on-ping impl/on-ping))
+#?(:clj (def open? impl/open?))
+#?(:clj (def websocket? impl/websocket?))
 #?(:clj (def Channel impl/Channel))
+#?(:clj (def as-channel impl/as-channel))
 
 #?(:clj
    (defmacro with-channel
