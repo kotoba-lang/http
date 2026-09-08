@@ -23,7 +23,7 @@
 
   Bytes are represented portably as a vector of ints in 0..255 (\"octets\"),
   so nothing here depends on a host byte-array type. Zero third-party deps."
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [kotoba.lang.http :as http]))
 
 ;; ---------------------------------------------------------------------------
@@ -263,7 +263,7 @@
   ([req] (serialize-request req nil))
   ([req opts]
    (let [lim (limits-of opts)
-         method (-> (or (:http/method req) :get) name str/upper-case)
+         method (-> (or (:http/method req) :get) name str/upper)
          body (->octets (:http/body req))]
      (cond
        (not (token? method)) (err :invalid-method {:method method})
@@ -285,7 +285,7 @@
                                  [] supplied)]
              (if (error? checked)
                checked
-               (let [has? (fn [nm] (some #(= (str/lower-case (first %)) nm) checked))
+               (let [has? (fn [nm] (some #(= (str/lower (first %)) nm) checked))
                      host (when-let [h (:host parsed)]
                             (if (:port parsed) (str h ":" (:port parsed)) h))
                      lines (cond-> checked
@@ -320,7 +320,7 @@
    {:phase :status
     :buf [] :off 0 :scan 0
     :limits (limits-of opts)
-    :method (keyword (str/lower-case (name (or (:method opts) :get))))
+    :method (keyword (str/lower (name (or (:method opts) :get))))
     :status nil :version nil :http-reason nil
     :header-lines [] :trailer-lines []
     :body [] :need 0 :chunks 0 :informational 0}))
@@ -411,7 +411,7 @@
               :else (ok [n v]))))))))
 
 (defn- field-values [lines nm]
-  (->> lines (filter #(= nm (str/lower-case (first %)))) (mapv second)))
+  (->> lines (filter #(= nm (str/lower (first %)))) (mapv second)))
 
 (defn- parse-content-length
   "Collect every Content-Length token across every field line. Identical
@@ -439,7 +439,7 @@
 (defn- parse-transfer-encoding [vals']
   (let [codings (->> vals'
                      (mapcat #(str/split % #"," -1))
-                     (map (comp str/lower-case str/trim))
+                     (map (comp str/lower str/trim))
                      (remove empty?)
                      vec)]
     (cond
@@ -665,7 +665,7 @@
   raw ordered lines are kept alongside so nothing is lost."
   [lines]
   (reduce (fn [m [n v]]
-            (let [k (str/lower-case n)]
+            (let [k (str/lower n)]
               (assoc m k (if-let [prev (get m k)] (str prev ", " v) v))))
           {} lines))
 

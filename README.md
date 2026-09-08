@@ -181,7 +181,7 @@ io.github.kotoba-lang/http {:git/sha "<sha>"}
 
 ```sh
 clojure -M:test                                      # JVM
-nbb --classpath src:test run-tests.cljs              # the same .cljc suite, second runtime
+nbb --classpath src:test:../text/src:../json/src run-tests.cljs              # the same .cljc suite, second runtime
 clojure -M:lint
 clojure -M:live scripts/live_fetch.clj               # live, over TLS 1.3
 ```

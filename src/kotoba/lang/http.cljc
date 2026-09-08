@@ -8,7 +8,7 @@
   pure and portable.
 
   Zero third-party runtime deps; .cljc (JVM / SCI / CLJS / GraalVM / kotoba-WASM)."
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [kotoba.lang.json :as json]))
 
 ;; ---------- request / response data ----------
@@ -18,7 +18,7 @@
   full URL string. Options: `:headers` (map), `:body`, `:query-params`."
   ([method url] (request method url nil))
   ([method url opts]
-   (cond-> {:http/method (keyword (str/lower-case (name method)))
+   (cond-> {:http/method (keyword (str/lower (name method)))
             :http/url    url}
      (:headers opts)       (assoc :http/headers (:headers opts))
      (contains? opts :body) (assoc :http/body (:body opts))
@@ -38,9 +38,9 @@
   `default` (nil) if absent."
   ([headers name] (header headers name nil))
   ([headers name default]
-   (let [target (str/lower-case (str name))]
+   (let [target (str/lower (str name))]
      (reduce (fn [acc [k v]]
-               (if (= (str/lower-case (str k)) target)
+               (if (= (str/lower (str k)) target)
                  (reduced v)
                  acc))
              default headers))))
@@ -48,8 +48,8 @@
 (defn set-header
   "Associate a header (replaces existing case-variant of the same name)."
   [headers name value]
-  (let [target (str/lower-case (str name))
-        filtered (into {} (remove (fn [[k _]] (= (str/lower-case (str k)) target)) headers))]
+  (let [target (str/lower (str name))
+        filtered (into {} (remove (fn [[k _]] (= (str/lower (str k)) target)) headers))]
     (assoc filtered name value)))
 
 ;; ---------- pure url parsing ----------
