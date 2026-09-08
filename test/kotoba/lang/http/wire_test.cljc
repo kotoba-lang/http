@@ -8,7 +8,7 @@
   the positive cases a byte at a time and demands the identical value, which
   is where real parsers break."
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [kotoba.lang.http :as http]
             [kotoba.lang.http.wire :as w]))
 
@@ -113,7 +113,7 @@
 (deftest caller-supplied-host-is-not-duplicated
   (let [out (w/latin1-decode (w/value (w/serialize-request
                                        (http/request :get "https://a.b/x" {:headers {"host" "other"}}))))]
-    (is (= 1 (count (re-seq #"host:" (str/lower-case out)))))
+    (is (= 1 (count (re-seq #"host:" (str/lower out)))))
     (is (str/includes? out "host: other"))))
 
 (deftest refuses-cr-in-a-header-name
