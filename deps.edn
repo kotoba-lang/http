@@ -6,7 +6,38 @@
  ;; deps; the only dep is the sibling kotoba-lang/json (first-party, zero-dep)
  ;; for JSON request/response body helpers. .cljc.
  ;; See ADR-kotoba-lang-foundational-stdlib.md.
- :deps {io.github.kotoba-lang/json {:git/sha "ae1f323a424119a04078e3a3bcbebdc5b4d321c7"}
+ :deps {
+        io.github.kotoba-lang/http-ihttp
+        {:git/url "https://github.com/kotoba-lang/http-ihttp.git"
+         :git/sha "47b9b4a7b1072f040626f938c6e6353424863f7c"}
+        io.github.kotoba-lang/http-decode-json-body
+        {:git/url "https://github.com/kotoba-lang/http-decode-json-body.git"
+         :git/sha "ddb31857056214cc42a9a5d49ab8b0500f6fcecd"}
+        io.github.kotoba-lang/http-fold-headers
+        {:git/url "https://github.com/kotoba-lang/http-fold-headers.git"
+         :git/sha "2332fc6c9735a824e6fb963bc1382b8d81f4ed09"}
+        io.github.kotoba-lang/http-header
+        {:git/url "https://github.com/kotoba-lang/http-header.git"
+         :git/sha "3038ab1397d90d386886d9f13a157b12851a2527"}
+        io.github.kotoba-lang/http-mock-http
+        {:git/url "https://github.com/kotoba-lang/http-mock-http.git"
+         :git/sha "b16ef526c236e033b11688f590ec2ee6c4f6348d"}
+        io.github.kotoba-lang/http-parse-url
+        {:git/url "https://github.com/kotoba-lang/http-parse-url.git"
+         :git/sha "fc9709d238abee29ecdddc4abde0eec153655ee6"}
+        io.github.kotoba-lang/http-request
+        {:git/url "https://github.com/kotoba-lang/http-request.git"
+         :git/sha "2332cf56ad9bdda749ea2633295e94382fb00371"}
+        io.github.kotoba-lang/http-request-json
+        {:git/url "https://github.com/kotoba-lang/http-request-json.git"
+         :git/sha "b07b88a951699b4e40730d9eeac22e1899a9f439"}
+        io.github.kotoba-lang/http-response
+        {:git/url "https://github.com/kotoba-lang/http-response.git"
+         :git/sha "d7dfe802817281cd8b3e4ccc9679632979a3ad94"}
+        io.github.kotoba-lang/http-set-header
+        {:git/url "https://github.com/kotoba-lang/http-set-header.git"
+         :git/sha "de1f5be2db5b9dddee0c832126e0d7c1dfe8eed8"}
+io.github.kotoba-lang/json {:git/sha "ae1f323a424119a04078e3a3bcbebdc5b4d321c7"}
         ;; kotoba.lang.text, not clojure.string. Pinned as an explicit floor:
         ;; tools.deps takes the NEWEST sha it is shown, so without a floor here
         ;; this repo silently rides whatever a sibling happens to name.
