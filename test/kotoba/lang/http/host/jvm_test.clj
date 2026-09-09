@@ -109,3 +109,38 @@
       (let [resp (http/send (jvm/->http {:timeout-seconds 10})
                             {:url (str base "/p") :method :get})]
         (is (= 201 (:status resp)))))))
+
+;; ---------------------------------------------------------------------------
+;; the asynchronous transport
+;; ---------------------------------------------------------------------------
+
+(deftest async-returns-the-same-answer-as-sync-for-the-same-request
+  ;; The claim worth testing is not "it returns a future" -- it is that the two
+  ;; transports AGREE. An application moving to the async shape is trusting
+  ;; exactly that, and two response builders that drift is what sharing
+  ;; `response->map` and `build-request` is for.
+  (with-server
+    (fn [base _]
+      (let [req {:url (str base "/same") :method :post
+                 :headers {"X-A" "1"} :body "payload"}
+            sync-resp ((jvm/http-transport {:timeout-seconds 10}) req)
+            async-resp (deref (.toCompletableFuture
+                               ((jvm/http-transport-async {:timeout-seconds 10}) req))
+                              10000 ::timed-out)]
+        (is (not= ::timed-out async-resp) "the future completed")
+        (is (= sync-resp async-resp)
+            "the same request through the two transports must give the same map")
+        (is (= 201 (:status async-resp)))
+        (is (= "first" (get-in async-resp [:headers "x-multi"])))))))
+
+(deftest async-refuses-an-unknown-method-on-the-callers-stack
+  ;; Not inside the future. A caller that is not yet dereferencing would never
+  ;; see a refusal that only surfaced there, and would find out by getting a
+  ;; response to a request it did not make.
+  (with-server
+    (fn [base seen]
+      (let [send! (jvm/http-transport-async {:timeout-seconds 10})
+            e (is (thrown? clojure.lang.ExceptionInfo
+                           (send! {:url (str base "/x") :method :teleport})))]
+        (is (= :teleport (:method (ex-data e))))
+        (is (nil? @seen) "nothing was sent")))))
