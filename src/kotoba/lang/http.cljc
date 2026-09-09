@@ -9,7 +9,8 @@
 
   Zero third-party runtime deps; .cljc (JVM / SCI / CLJS / GraalVM / kotoba-WASM)."
   (:require [kotoba.lang.text :as str]
-            [kotoba.lang.json :as json]))
+            [kotoba.lang.json :as json])
+  (:require [kotoba.http.http :as http-p]))
 
 ;; ---------- request / response data ----------
 
@@ -99,8 +100,13 @@
 
 ;; ---------- IHttp protocol (host-injected transport) ----------
 
-(defprotocol IHttp
-  (send [http req] "Perform `req`, return a response map."))
+(def IHttp
+  "The protocol itself lives in one repo of its own now. This name is that
+  SAME protocol, not a second one: an implementation reified against either
+  is accepted by both (ADR-2609091900)."
+  http-p/Http)
+
+(def send http-p/send)
 
 (defn mock-http
   "An IHttp whose `send` routes each request through `handler` (fn of req →
