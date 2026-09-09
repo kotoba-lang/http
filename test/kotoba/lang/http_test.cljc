@@ -9,6 +9,25 @@
   (is (= 200 (:http/status (http/response 200))))
   (is (= {:http/status 201 :http/headers {} :http/body "x"} (http/response 201 {} "x"))))
 
+(deftest fold-headers-lowercases-and-keeps-the-first-value
+  ;; The rule both client hosts answer with. Tested HERE, in .cljc, because
+  ;; this file runs on both runtimes and the hosts do not: host/jvm is JVM-only
+  ;; and host/node is Node-only, so a rule tested only inside one of them is a
+  ;; rule tested on one runtime. That is the failure run-tests.cljs was written
+  ;; for -- kotoba-lang/bytes shipped a SHA-1 that was wrong on ClojureScript
+  ;; and a JVM run was all it had.
+  (is (= {"x-multi" "first" "replay-nonce" "nonce-abc" "already-low" "v"}
+         (http/fold-headers [["X-Multi" ["first" "second"]]
+                             ["Replay-Nonce" ["nonce-abc"]]
+                             ["already-low" ["v"]]])))
+  (testing "a repeated NAME keeps the first occurrence, which is how node's rawHeaders arrives"
+    (is (= {"x-multi" "first"}
+           (http/fold-headers [["X-Multi" "first"] ["X-Multi" "second"]]))))
+  (testing "a plain string value is kept, not treated as a sequence of characters"
+    (is (= {"a" "bcd"} (http/fold-headers [["A" "bcd"]]))))
+  (testing "empty in, empty out -- and not a crash, because a HEAD response has no headers to fold"
+    (is (= {} (http/fold-headers [])))))
+
 (deftest header-case-insensitive
   (let [h {"Content-Type" "json" "X-Foo" "1"}]
     (is (= "json" (http/header h "content-type")))

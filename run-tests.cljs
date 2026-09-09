@@ -8,7 +8,8 @@
 ;; either had.
 ;;
 ;; 1 test namespace(s) here are .clj and deliberately JVM-only; they are
-;; not listed below because they cannot load on nbb by construction.
+;; not listed below because they cannot load on nbb by construction. The
+;; reverse is now also true: host/node-test is .cljs and runs ONLY here.
 ;;
 ;; nbb prints its own summary; this only supplies the exit code, because a
 ;; suite that fails while exiting 0 is worse than one that does not run.
@@ -16,9 +17,13 @@
   (:require [clojure.test :as t]
             [kotoba.lang.http-test]
             [kotoba.lang.http.wire-test]
+            ;; host/node is .cljs and Node-only by construction: it is the one
+            ;; client host the JVM suite cannot run, which is the point of it.
+            [kotoba.lang.http.host.node-test]
             ))
 
 (defmethod t/report [:cljs.test/default :end-run-tests] [m]
   (when-not (t/successful? m) (js/process.exit 1)))
 
-(t/run-tests 'kotoba.lang.http-test 'kotoba.lang.http.wire-test)
+(t/run-tests 'kotoba.lang.http-test 'kotoba.lang.http.wire-test
+             'kotoba.lang.http.host.node-test)
