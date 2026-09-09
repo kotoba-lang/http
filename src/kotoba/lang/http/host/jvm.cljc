@@ -78,9 +78,13 @@
       Public and separate from `response->map` so the rule can be tested on an
       input this namespace controls. Through a real request it cannot be: the
       JDK folds the keys before they get here, so a round trip stays green
-      whether or not this function folds anything."
+      whether or not this function folds anything.
+
+      The rule itself moved to `kotoba.lang.http/fold-headers` when host/node
+      arrived and needed the same answer. This name stays because it is the one
+      this host's tests and its consumers already use."
      [header-map]
-     (into {} (map (fn [[k v]] [(.toLowerCase ^String k) (first v)])) header-map)))
+     (http/fold-headers header-map)))
 
 #?(:clj
    (defn- response->map [^HttpResponse resp]
