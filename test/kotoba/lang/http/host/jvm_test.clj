@@ -43,6 +43,34 @@
       (f (str "http://127.0.0.1:" (.getPort (.getAddress server))) seen)
       (finally (.stop server 0)))))
 
+(deftest binary-roundtrip-preserves-every-octet-sync-and-async
+  (let [server (HttpServer/create (InetSocketAddress. "127.0.0.1" 0) 0)
+        seen (atom [])
+        payload (byte-array (map unchecked-byte (range 256)))]
+    (.createContext server "/" (reify HttpHandler
+                                (handle [_ exchange]
+                                  (let [body (.readAllBytes (.getRequestBody exchange))]
+                                    (swap! seen conj (vec body))
+                                    (.sendResponseHeaders exchange 200 (alength body))
+                                    (with-open [out (.getResponseBody exchange)] (.write out body))))))
+    (.start server)
+    (try
+      (doseq [async? [false true]]
+        (let [send! ((if async? jvm/http-transport-async jvm/http-transport) {:timeout-seconds 10})
+              result (send! {:url (str "http://127.0.0.1:" (.getPort (.getAddress server)))
+                             :method :put :body-bytes payload :response-type :bytes})
+              response (if async? @result result)]
+          (is (= 200 (:status response)))
+          (is (= (vec payload) (vec (:body response))))))
+      (is (= [(vec payload) (vec payload)] @seen))
+      (doseq [bad [{:body-bytes "not bytes"}
+                   {:body-bytes payload :body "conflicting"}
+                   {:response-type :unknown}]]
+        (is (thrown? clojure.lang.ExceptionInfo
+                     ((jvm/http-transport {:timeout-seconds 10})
+                      (merge {:url "http://127.0.0.1:1" :method :post} bad)))))
+      (finally (.stop server 0)))))
+
 (deftest performs-a-real-request-and-returns-the-documented-shape
   (with-server
     (fn [base seen]

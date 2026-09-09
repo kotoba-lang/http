@@ -109,10 +109,15 @@
       `method->name`, so an unsupported method is refused here -- before either
       transport sends anything, and on the caller's own stack rather than inside
       a future it may not be looking at."
-     [{:keys [url method headers body] :as req} timeout-seconds]
+     [{:keys [url method headers body body-bytes] :as req} timeout-seconds]
+     (when (and (contains? req :body-bytes)
+                (or (not (bytes? body-bytes)) (contains? req :body)))
+       (throw (ex-info "body-bytes requires a byte array and excludes body" {})))
      (let [secs (long (or (:timeout-seconds req) timeout-seconds 120))
            publisher (if (contains? methods-with-body (keyword (name (or method :get))))
-                       (HttpRequest$BodyPublishers/ofString (str (or body "")))
+                       (if (contains? req :body-bytes)
+                         (HttpRequest$BodyPublishers/ofByteArray body-bytes)
+                         (HttpRequest$BodyPublishers/ofString (str (or body ""))))
                        (HttpRequest$BodyPublishers/noBody))
            builder (-> (HttpRequest/newBuilder)
                        (.uri (URI/create url))
@@ -123,15 +128,25 @@
        (.build builder))))
 
 #?(:clj
+   (defn- response-handler [req]
+     (case (:response-type req)
+       (nil :text) (HttpResponse$BodyHandlers/ofString)
+       :bytes (HttpResponse$BodyHandlers/ofByteArray)
+       (throw (ex-info "Unsupported response-type" {:response-type (:response-type req)})))))
+
+#?(:clj
    (defn http-transport
      "Return a function of a request map, performing it over `java.net.http`.
 
       req  {:url string
             :method :get|:post|:put|:patch|:delete|:head|:options
             :headers {string-or-keyword value}   optional
-            :body string}                        optional
-      ->   {:status int :headers {lowercase-name value} :body string}
+            :body string                         optional
+            :body-bytes byte-array               optional, excludes :body
+            :response-type :text|:bytes}          optional, defaults to text
+      ->   {:status int :headers {lowercase-name value} :body string-or-bytes}
 
+      Byte mode preserves every octet without a text/base64 round trip.
       `:timeout-seconds` bounds the request; it is required to be present in
       opts or in the request rather than defaulted here, because a transport
       with no timeout is how one unreachable host stops a whole process, and
@@ -142,7 +157,7 @@
         (fn [req]
           (response->map
            (.send client (build-request req timeout-seconds)
-                  (HttpResponse$BodyHandlers/ofString))))))))
+                  (response-handler req))))))))
 
 #?(:clj
    (defn http-transport-async
@@ -172,7 +187,7 @@
           (.thenApply
            (.sendAsync client
                        (build-request req timeout-seconds)
-                       (HttpResponse$BodyHandlers/ofString))
+                       (response-handler req))
            (reify Function (apply [_ resp] (response->map resp))))))))) 
 
 #?(:clj
