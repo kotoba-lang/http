@@ -12,31 +12,32 @@
          :git/sha "f7495072017e9c7f04576bd6233f3bd39005688e"}
         io.github.kotoba-lang/http-decode-json-body
         {:git/url "https://github.com/kotoba-lang/http-decode-json-body.git"
-         :git/sha "ddb31857056214cc42a9a5d49ab8b0500f6fcecd"}
+         :git/sha "c830f63eb75b1081d689dc194a3e3c6aef59e573"}
         io.github.kotoba-lang/http-fold-headers
         {:git/url "https://github.com/kotoba-lang/http-fold-headers.git"
-         :git/sha "2332fc6c9735a824e6fb963bc1382b8d81f4ed09"}
+         :git/sha "41c530b976f159ca55056e80fee6e817deb0c17c"}
         io.github.kotoba-lang/http-header
         {:git/url "https://github.com/kotoba-lang/http-header.git"
-         :git/sha "3038ab1397d90d386886d9f13a157b12851a2527"}
+         :git/sha "ad39da57026254369bab7818252b1f1b5bdd1173"}
         io.github.kotoba-lang/http-mock-http
         {:git/url "https://github.com/kotoba-lang/http-mock-http.git"
-         :git/sha "117fbb9d31954e2f0115f0bef0a8abfe66336a46"}
+         :git/sha "8cad99ec188c291ff4a4905ce5cda3522ebb9f26"}
         io.github.kotoba-lang/http-parse-url
         {:git/url "https://github.com/kotoba-lang/http-parse-url.git"
-         :git/sha "fc9709d238abee29ecdddc4abde0eec153655ee6"}
+         :git/sha "df88f9a1578cd14eea0619f0a8d77b6682fdd8ed"}
         io.github.kotoba-lang/http-request
         {:git/url "https://github.com/kotoba-lang/http-request.git"
-         :git/sha "2332cf56ad9bdda749ea2633295e94382fb00371"}
+         :git/sha "7c7d7c34f70ae47442730088b760c7a155be4124"}
         io.github.kotoba-lang/http-request-json
         {:git/url "https://github.com/kotoba-lang/http-request-json.git"
-         :git/sha "b07b88a951699b4e40730d9eeac22e1899a9f439"}
+         :git/sha "38f7341c36b7b49fc8add0e9ba70029733aa820b"}
         io.github.kotoba-lang/http-response
         {:git/url "https://github.com/kotoba-lang/http-response.git"
-         :git/sha "d7dfe802817281cd8b3e4ccc9679632979a3ad94"}
+         :git/sha "ed1b1a32a889da9490a5436aaf4db9a933c96218"}
         io.github.kotoba-lang/http-set-header
         {:git/url "https://github.com/kotoba-lang/http-set-header.git"
-         :git/sha "de1f5be2db5b9dddee0c832126e0d7c1dfe8eed8"}
+         :git/sha "0d34c33367b26ff33db57468d5ce338c167b790c"}
+
 
 io.github.kotoba-lang/json {:git/sha "ae1f323a424119a04078e3a3bcbebdc5b4d321c7"}
         ;; kotoba.lang.text, not clojure.string. Pinned as an explicit floor:
