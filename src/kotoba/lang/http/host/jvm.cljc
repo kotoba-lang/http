@@ -54,7 +54,8 @@
                    [java.net.http HttpClient HttpClient$Redirect
                     HttpRequest HttpResponse
                     HttpRequest$BodyPublishers HttpResponse$BodyHandlers]
-                   [java.time Duration])))
+                   [java.time Duration]
+                   [java.util.function Function])))
 
 #?(:clj
    (def ^:private methods-with-body
@@ -93,6 +94,35 @@
       :body (.body resp)}))
 
 #?(:clj
+   (defn- build-client
+     "One client construction, shared by the sync and async transports. Two
+      copies of `Redirect/NORMAL` is how one of them stops following."
+     [connect-timeout-seconds]
+     (-> (HttpClient/newBuilder)
+         (.connectTimeout (Duration/ofSeconds (long (or connect-timeout-seconds 30))))
+         (.followRedirects HttpClient$Redirect/NORMAL)
+         (.build))))
+
+#?(:clj
+   (defn- build-request
+     "One request construction, likewise. The method is resolved through
+      `method->name`, so an unsupported method is refused here -- before either
+      transport sends anything, and on the caller's own stack rather than inside
+      a future it may not be looking at."
+     [{:keys [url method headers body] :as req} timeout-seconds]
+     (let [secs (long (or (:timeout-seconds req) timeout-seconds 120))
+           publisher (if (contains? methods-with-body (keyword (name (or method :get))))
+                       (HttpRequest$BodyPublishers/ofString (str (or body "")))
+                       (HttpRequest$BodyPublishers/noBody))
+           builder (-> (HttpRequest/newBuilder)
+                       (.uri (URI/create url))
+                       (.timeout (Duration/ofSeconds secs))
+                       (.method (method->name (or method :get)) publisher))]
+       (doseq [[k v] headers]
+         (.header builder (if (keyword? k) (name k) (str k)) (str v)))
+       (.build builder))))
+
+#?(:clj
    (defn http-transport
      "Return a function of a request map, performing it over `java.net.http`.
 
@@ -108,23 +138,42 @@
       the right bound belongs to the caller who knows what it is calling."
      ([] (http-transport {}))
      ([{:keys [timeout-seconds connect-timeout-seconds]}]
-      (let [client (-> (HttpClient/newBuilder)
-                       (.connectTimeout (Duration/ofSeconds (long (or connect-timeout-seconds 30))))
-                       (.followRedirects HttpClient$Redirect/NORMAL)
-                       (.build))]
-        (fn [{:keys [url method headers body] :as req}]
-          (let [secs (long (or (:timeout-seconds req) timeout-seconds 120))
-                publisher (if (contains? methods-with-body (keyword (name (or method :get))))
-                            (HttpRequest$BodyPublishers/ofString (str (or body "")))
-                            (HttpRequest$BodyPublishers/noBody))
-                builder (-> (HttpRequest/newBuilder)
-                            (.uri (URI/create url))
-                            (.timeout (Duration/ofSeconds secs))
-                            (.method (method->name (or method :get)) publisher))]
-            (doseq [[k v] headers]
-              (.header builder (if (keyword? k) (name k) (str k)) (str v)))
-            (response->map
-             (.send client (.build builder) (HttpResponse$BodyHandlers/ofString)))))))))
+      (let [client (build-client connect-timeout-seconds)]
+        (fn [req]
+          (response->map
+           (.send client (build-request req timeout-seconds)
+                  (HttpResponse$BodyHandlers/ofString))))))))
+
+#?(:clj
+   (defn http-transport-async
+     "The same request, returning a `CompletableFuture` of the same response map.
+
+      The synchronous `http-transport` above blocks the calling thread until the
+      response arrives. `host/node` cannot block at all -- Node has no
+      in-process synchronous HTTP -- so an application that wants ONE shape on
+      both runtimes has to be the asynchronous one, and this is the JVM half of
+      it.
+
+      `HttpClient.sendAsync` rather than a thread that waits on the sync call:
+      wrapping a blocking send in a future is asynchronous to its caller and
+      still holds a thread for the whole round trip, which is the cost the shape
+      was adopted to avoid.
+
+      A CompletableFuture, and deliberately not a promesa promise: this
+      repository ships zero third-party runtime dependencies and that is a
+      property worth more than the convenience. promesa treats a
+      CompletableFuture and a js/Promise as the same thing, so an application
+      that already has it can put both hosts behind one API -- which is the
+      layer where a dependency belongs."
+     ([] (http-transport-async {}))
+     ([{:keys [timeout-seconds connect-timeout-seconds]}]
+      (let [client (build-client connect-timeout-seconds)]
+        (fn [req]
+          (.thenApply
+           (.sendAsync client
+                       (build-request req timeout-seconds)
+                       (HttpResponse$BodyHandlers/ofString))
+           (reify Function (apply [_ resp] (response->map resp))))))))) 
 
 #?(:clj
    (defn ->http
