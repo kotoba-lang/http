@@ -4,7 +4,7 @@
   This namespace holds no implementation. It re-exports the definitions
   that each live in their own repo, so a call site can require one name
   and a library can require only the definitions it actually uses."
-  (:require [kotoba.http.ihttp :as ihttp-ns]
+  (:require [kotoba.http.http :as ihttp-ns]
             [kotoba.http.decode-json-body :as decode-json-body-ns]
             [kotoba.http.fold-headers :as fold-headers-ns]
             [kotoba.http.header :as header-ns]
@@ -23,5 +23,5 @@
 (def request "See kotoba.http.request/request." request-ns/request)
 (def request-json "See kotoba.http.request-json/request-json." request-json-ns/request-json)
 (def response "See kotoba.http.response/response." response-ns/response)
-(def send "See kotoba.http.ihttp/send." ihttp-ns/send)
+(def send "See kotoba.http.http/send." ihttp-ns/send)
 (def set-header "See kotoba.http.set-header/set-header." set-header-ns/set-header)
