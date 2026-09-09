@@ -7,9 +7,9 @@
  ;; for JSON request/response body helpers. .cljc.
  ;; See ADR-kotoba-lang-foundational-stdlib.md.
  :deps {
-        io.github.kotoba-lang/http-ihttp
-        {:git/url "https://github.com/kotoba-lang/http-ihttp.git"
-         :git/sha "47b9b4a7b1072f040626f938c6e6353424863f7c"}
+        io.github.kotoba-lang/http-http
+        {:git/url "https://github.com/kotoba-lang/http-http.git"
+         :git/sha "f7495072017e9c7f04576bd6233f3bd39005688e"}
         io.github.kotoba-lang/http-decode-json-body
         {:git/url "https://github.com/kotoba-lang/http-decode-json-body.git"
          :git/sha "ddb31857056214cc42a9a5d49ab8b0500f6fcecd"}
@@ -21,7 +21,7 @@
          :git/sha "3038ab1397d90d386886d9f13a157b12851a2527"}
         io.github.kotoba-lang/http-mock-http
         {:git/url "https://github.com/kotoba-lang/http-mock-http.git"
-         :git/sha "b16ef526c236e033b11688f590ec2ee6c4f6348d"}
+         :git/sha "117fbb9d31954e2f0115f0bef0a8abfe66336a46"}
         io.github.kotoba-lang/http-parse-url
         {:git/url "https://github.com/kotoba-lang/http-parse-url.git"
          :git/sha "fc9709d238abee29ecdddc4abde0eec153655ee6"}
@@ -37,6 +37,7 @@
         io.github.kotoba-lang/http-set-header
         {:git/url "https://github.com/kotoba-lang/http-set-header.git"
          :git/sha "de1f5be2db5b9dddee0c832126e0d7c1dfe8eed8"}
+
 io.github.kotoba-lang/json {:git/sha "ae1f323a424119a04078e3a3bcbebdc5b4d321c7"}
         ;; kotoba.lang.text, not clojure.string. Pinned as an explicit floor:
         ;; tools.deps takes the NEWEST sha it is shown, so without a floor here
