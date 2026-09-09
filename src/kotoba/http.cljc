@@ -3,7 +3,13 @@
 
   This namespace holds no implementation. It re-exports the definitions
   that each live in their own repo, so a call site can require one name
-  and a library can require only the definitions it actually uses."
+  and a library can require only the definitions it actually uses.
+
+  NOT re-exported here, on purpose: IHttp. A protocol's identity is what extend-type and reify dispatch on,
+  and a copy would make an implementation silently extend nothing, so the
+  protocol name stays in the one repo that declares it. Requiring that repo
+  is a compile error away; a copy would not be.
+"
   (:require [kotoba.http.http :as ihttp-ns]
             [kotoba.http.decode-json-body :as decode-json-body-ns]
             [kotoba.http.fold-headers :as fold-headers-ns]
