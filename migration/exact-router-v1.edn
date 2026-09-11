@@ -1,7 +1,7 @@
 {:schema :kotoba.http-migration/v1
  :profile :kotoba.http/exact-router-v1
  :legacy
- {:source "src/kotoba/lang/http.cljc"
+ {:source "src/kotoba/lang/http.cljk"
   :status :retained-data-and-host-oracle}
  :canonical
  {:source "src/kotoba/lang/exact_router.kotoba"

@@ -126,11 +126,11 @@ policy.
 
 ### Live proof
 
-`scripts/live_fetch.clj` composes `kotoba-lang/org-ietf-tls` as the transport
+`scripts/live_fetch.cljk` composes `kotoba-lang/org-ietf-tls` as the transport
 with this client and fetches from `kotobase.net:443` under an SPKI pin:
 
 ```sh
-clojure -M:live scripts/live_fetch.clj
+clojure -M:live scripts/live_fetch.cljk
 ```
 
 org-ietf-tls is a **script-scope** dependency (the `:live` alias) and appears
@@ -181,9 +181,9 @@ io.github.kotoba-lang/http {:git/sha "<sha>"}
 
 ```sh
 clojure -M:test                                      # JVM
-nbb --classpath src:test:../text/src:../json/src run-tests.cljs              # the same .cljc suite, second runtime
+nbb --classpath src:test:../text/src:../json/src run-tests.cljk              # the same .cljc suite, second runtime
 clojure -M:lint
-clojure -M:live scripts/live_fetch.clj               # live, over TLS 1.3
+clojure -M:live scripts/live_fetch.cljk               # live, over TLS 1.3
 ```
 
 The suite prints `EXECUTED <n> FLOOR <n>` and fails below the floor; the live

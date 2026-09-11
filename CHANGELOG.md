@@ -21,7 +21,7 @@ kotoba-lang stdlib compatibility policy (kotoba-lang/kotoba-lang/docs/lang/stdli
   non-hex chunk sizes, truncated chunks, a missing last chunk, a bare LF
   terminator, whitespace before a colon, obs-fold, and every caller-supplied
   ceiling.
-- `scripts/live_fetch.clj` + the `:live` alias: a live composition with
+- `scripts/live_fetch.cljk` + the `:live` alias: a live composition with
   `kotoba-lang/org-ietf-tls` (script-scope only) against `kotobase.net:443`,
   using its shipped `tls.provider.jvm` directly with no adaptation (measured at
   org-ietf-tls `b91d4a1`), plus a wrong-pin negative control.

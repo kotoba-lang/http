@@ -1,6 +1,6 @@
-(ns kotoba.lang.http-test
+(ns kotoba.http-test
   (:require [clojure.test :refer [deftest is testing]]
-            [kotoba.lang.http :as http]))
+            [kotoba.http :as http]))
 
 (deftest request-and-response-shape
   (is (= :get (:http/method (http/request :get "https://x"))))
@@ -13,7 +13,7 @@
   ;; The rule both client hosts answer with. Tested HERE, in .cljc, because
   ;; this file runs on both runtimes and the hosts do not: host/jvm is JVM-only
   ;; and host/node is Node-only, so a rule tested only inside one of them is a
-  ;; rule tested on one runtime. That is the failure run-tests.cljs was written
+  ;; rule tested on one runtime. That is the failure run-tests.cljk was written
   ;; for -- kotoba-lang/bytes shipped a SHA-1 that was wrong on ClojureScript
   ;; and a JVM run was all it had.
   (is (= {"x-multi" "first" "replay-nonce" "nonce-abc" "already-low" "v"}
