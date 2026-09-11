@@ -63,7 +63,7 @@ io.github.kotoba-lang/json {:git/sha "ae1f323a424119a04078e3a3bcbebdc5b4d321c7"}
          :main-opts ["-m" "cognitect.test-runner"]
          :exec-fn cognitect.test-runner.api/test}
 
-  ;; Live composition proof (scripts/live_fetch.clj). org-ietf-tls is a
+  ;; Live composition proof (scripts/live_fetch.cljk). org-ietf-tls is a
   ;; SCRIPT-SCOPE dependency and appears nowhere in :deps -- `http` is Layer 3
   ;; of the foundational stdlib and must not depend on TLS. The wire client
   ;; takes an injected byte transport; this alias only supplies one real

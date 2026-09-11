@@ -1,7 +1,7 @@
 ;; A live composition: kotoba-lang/org-ietf-tls as the byte transport,
 ;; kotoba.lang.http.wire as the HTTP/1.1 client on top of it.
 ;;
-;;   clojure -M:live scripts/live_fetch.clj
+;;   clojure -M:live scripts/live_fetch.cljk
 ;;
 ;; org-ietf-tls is a SCRIPT-SCOPE dependency (the :live alias) and nothing
 ;; else. `http` itself must not depend on TLS: it is Layer 3 of the
