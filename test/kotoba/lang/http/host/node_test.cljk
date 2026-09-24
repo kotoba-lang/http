@@ -1,7 +1,7 @@
 (ns kotoba.lang.http.host.node-test
   "The Node client host, against a real server. `node:http` is in the runtime,
   so a round trip costs no dependency here either."
-  (:require [clojure.test :refer [deftest is testing async]]
+  (:require [kotoba.test :refer [deftest is testing async]]
             [kotoba.lang.http.host.node :as node]
             ["node:http" :as http]))
 

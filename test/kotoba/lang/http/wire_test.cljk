@@ -7,7 +7,7 @@
   not depend on how the bytes were chunked: `feed-one-byte-at-a-time` re-runs
   the positive cases a byte at a time and demands the identical value, which
   is where real parsers break."
-  (:require [clojure.test :refer [deftest is testing use-fixtures]]
+  (:require [kotoba.test :refer [deftest is testing use-fixtures]]
             [kotoba.lang.text :as str]
             [kotoba.lang.http :as http]
             [kotoba.lang.http.wire :as w]))
