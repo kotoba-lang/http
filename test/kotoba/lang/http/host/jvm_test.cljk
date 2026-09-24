@@ -6,12 +6,11 @@
   source: that `java.net.http` returns headers in the case and arity the call
   sites read them in. `com.sun.net.httpserver` is in the JDK, so a real
   round trip costs no dependency."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.bytes :as kbytes] [clojure.test :refer [deftest is testing]]
             [kotoba.lang.http :as http]
             [kotoba.lang.http.host.jvm :as jvm])
   (:import [com.sun.net.httpserver HttpServer HttpHandler]
-           [java.net InetSocketAddress]
-           [java.nio.charset StandardCharsets]))
+           [java.net InetSocketAddress]))
 
 (defn- with-server
   "Run `f` against a server that echoes what it was sent. `f` receives the
@@ -35,7 +34,7 @@
            (.add (.getResponseHeaders exchange) "X-Multi" "first")
            (.add (.getResponseHeaders exchange) "X-Multi" "second")
            (.add (.getResponseHeaders exchange) "Replay-Nonce" "nonce-abc")
-           (let [payload (.getBytes (str "echo:" body) StandardCharsets/UTF_8)]
+           (let [payload (kbytes/utf8-bytes (str "echo:" body))]
              (.sendResponseHeaders exchange 201 (alength payload))
              (doto (.getResponseBody exchange) (.write payload) (.close))))))) 
     (.start server)
