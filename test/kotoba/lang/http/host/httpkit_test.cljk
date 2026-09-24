@@ -9,7 +9,7 @@
      WebSocket channel binding); without an as-channel def on the seam the
      next consumer after #3 died at compile of its own file. The seam must
      carry the full server surface, not just what the first consumer used."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [kotoba.lang.http.host.httpkit :as hk])
   #?(:clj (:require [org.httpkit.server :as impl])))
 

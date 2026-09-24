@@ -1,5 +1,5 @@
 (ns kotoba.lang.exact-router-test
-  (:require [clojure.test :refer [deftest is]]
+  (:require [kotoba.test :refer [deftest is]]
             [kotoba.compiler.core :as compiler]
             [kotoba.kir :as kir]))
 

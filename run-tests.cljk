@@ -14,7 +14,7 @@
 ;; nbb prints its own summary; this only supplies the exit code, because a
 ;; suite that fails while exiting 0 is worse than one that does not run.
 (ns run-tests
-  (:require [clojure.test :as t]
+  (:require [kotoba.test :as t]
             [kotoba.lang.http-test]
             [kotoba.lang.http.wire-test]
             ;; host/node is .cljs and Node-only by construction: it is the one
