@@ -6,7 +6,7 @@
   source: that `java.net.http` returns headers in the case and arity the call
   sites read them in. `com.sun.net.httpserver` is in the JDK, so a real
   round trip costs no dependency."
-  (:require [kotoba.bytes :as kbytes] [kotoba.test :refer [deftest is testing]]
+  (:require [kotoba.lang.error :as kerror] [kotoba.bytes :as kbytes] [kotoba.test :refer [deftest is testing]]
             [kotoba.lang.http :as http]
             [kotoba.lang.http.host.jvm :as jvm])
   (:import [com.sun.net.httpserver HttpServer HttpHandler]
@@ -65,7 +65,7 @@
       (doseq [bad [{:body-bytes "not bytes"}
                    {:body-bytes payload :body "conflicting"}
                    {:response-type :unknown}]]
-        (is (thrown? clojure.lang.ExceptionInfo
+        (is (thrown? kerror/ExceptionInfo
                      ((jvm/http-transport {:timeout-seconds 10})
                       (merge {:url "http://127.0.0.1:1" :method :post} bad)))))
       (finally (.stop server 0)))))
@@ -123,7 +123,7 @@
   (with-server
     (fn [base seen]
       (let [send! (jvm/http-transport {:timeout-seconds 10})
-            e (is (thrown? clojure.lang.ExceptionInfo
+            e (is (thrown? kerror/ExceptionInfo
                            (send! {:url (str base "/x") :method :teleport})))]
         (is (= :teleport (:method (ex-data e)))
             "the refusal names the method it refused")
@@ -167,7 +167,7 @@
   (with-server
     (fn [base seen]
       (let [send! (jvm/http-transport-async {:timeout-seconds 10})
-            e (is (thrown? clojure.lang.ExceptionInfo
+            e (is (thrown? kerror/ExceptionInfo
                            (send! {:url (str base "/x") :method :teleport})))]
         (is (= :teleport (:method (ex-data e))))
         (is (nil? @seen) "nothing was sent")))))
