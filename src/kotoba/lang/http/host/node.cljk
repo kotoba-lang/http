@@ -1,7 +1,7 @@
 (ns kotoba.lang.http.host.node
   "Node host adapter for OUTBOUND HTTP over `node:http` / `node:https`.
 
-  The runtime this workspace prefers. CLAUDE.md orders them
+  The runtime this workspace prefers. AGENTS.md orders them
   `kotoba wasm > clojurewasm > ClojureScript > nbb`, with the JVM below that,
   and until this existed the only client hosts here were `host/jvm`
   (java.net.http) and `host/babashka` (a third-party client). Outbound HTTP on
