@@ -1,12 +1,1 @@
-;; nbb.edn -- the kbb engine reads :deps HERE, not from deps.edn (kbb -M:test
-;; puts no git coordinate from deps.edn on the classpath). Created by
-;; scripts/migrate-clojure-test-to-kotoba-test.cljk; :paths copied from deps.edn.
-{:paths ["src"]
- :deps {
-        ;; kotoba.lang.error replaced clojure.lang.ExceptionInfo here (2026-09-25).
-        ;; An explicit floor: tools.deps takes the NEWEST sha it is shown.
-        io.github.kotoba-lang/error {:git/sha "838dec56c9a5b74f9eec825a2fb28bda157f8cd3"}
-        ;; kotoba.test (clojure.test-compatible surface), not clojure.test --
-        ;; scripts/migrate-clojure-test-to-kotoba-test.cljk. Explicit floor.
-        io.github.kotoba-lang/test {:git/url "https://github.com/kotoba-lang/test.git"
-                                    :git/sha "2ab4885f99fd25552d380d0f6b0b54c5a72eb7ae"}}}
+{:paths ["src"], :deps #:io.github.kotoba-lang{error #:git{:sha "838dec56c9a5b74f9eec825a2fb28bda157f8cd3"}, test #:git{:url "https://github.com/kotoba-lang/test.git", :sha "2ab4885f99fd25552d380d0f6b0b54c5a72eb7ae"}, bytes #:git{:sha "7a286888fcd9288ea1c5136f82a84749e70175cd"}, json #:git{:sha "ae1f323a424119a04078e3a3bcbebdc5b4d321c7"}, text #:git{:sha "73bdb13ae7a3d004b44bca08be03a3191157a38f"}}}
