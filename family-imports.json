@@ -518,7 +518,7 @@
     "test/kotoba/lang/http/host/jvm_test.cljk": {
       "original-sha256": "8a9a1773194dedaf8c31d5fb4f00e3adb2893d2a5bdd5f5591479d3d1565fe8c",
       "sha256": "a06ba9156c3bb23a73da58f48fb1d03ed24767d9d6ec8d9731874c6af3175594",
-      "reason": "Use the real per-host exception class in existing assertions: URI parser errors are URISyntaxException on JVM / Error on CLJS, while the JVM HTTP host wraps failures with ExceptionInfo. Production code unchanged."
+      "reason": "Use the static JVM ExceptionInfo class in existing catch assertions instead of a var alias; the JVM HTTP host wraps failures with ex-info. Production code and all asserted rejection cases are unchanged."
     }
   }
 }
