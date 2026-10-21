@@ -65,7 +65,7 @@
       (doseq [bad [{:body-bytes "not bytes"}
                    {:body-bytes payload :body "conflicting"}
                    {:response-type :unknown}]]
-        (is (thrown? kerror/ExceptionInfo
+        (is (thrown? #?(:clj clojure.lang.ExceptionInfo :cljs kerror/ExceptionInfo)
                      ((jvm/http-transport {:timeout-seconds 10})
                       (merge {:url "http://127.0.0.1:1" :method :post} bad)))))
       (finally (.stop server 0)))))
@@ -123,7 +123,7 @@
   (with-server
     (fn [base seen]
       (let [send! (jvm/http-transport {:timeout-seconds 10})
-            e (is (thrown? kerror/ExceptionInfo
+            e (is (thrown? #?(:clj clojure.lang.ExceptionInfo :cljs kerror/ExceptionInfo)
                            (send! {:url (str base "/x") :method :teleport})))]
         (is (= :teleport (:method (ex-data e)))
             "the refusal names the method it refused")
@@ -167,7 +167,7 @@
   (with-server
     (fn [base seen]
       (let [send! (jvm/http-transport-async {:timeout-seconds 10})
-            e (is (thrown? kerror/ExceptionInfo
+            e (is (thrown? #?(:clj clojure.lang.ExceptionInfo :cljs kerror/ExceptionInfo)
                            (send! {:url (str base "/x") :method :teleport})))]
         (is (= :teleport (:method (ex-data e))))
         (is (nil? @seen) "nothing was sent")))))
